@@ -21,7 +21,7 @@
         </div>
         <div class="text-center">
           <div id="live-sensor-value-large" class="text-3xl font-black font-mono text-slate-900">0</div>
-          <p class="text-xs text-slate-500 font-medium">Digital Output (GPIO 34)</p>
+          <p class="text-xs text-slate-500 font-medium">Digital Output (NodeMCU Pin D5 / GPIO 14)</p>
         </div>
       </div>
 
@@ -29,51 +29,51 @@
       <div class="lg:col-span-5 space-y-4">
         <div>
           <div class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-sky-100 text-sky-800 uppercase tracking-wider mb-1">
-            Physical ESP32 Mirror
+            Physical ESP8266 NodeMCU Mirror
           </div>
           <h3 class="text-xl font-bold text-slate-900">Live Hardware Pinout State</h3>
-          <p class="text-xs text-slate-500">Instant mirroring of GPIO logic levels and physical actuators.</p>
+          <p class="text-xs text-slate-500">Instant mirroring of NodeMCU logic levels and physical actuators.</p>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           
-          <!-- Green LED Pin 26 -->
+          <!-- Green LED Pin D7 -->
           <div class="p-3 rounded-xl border border-slate-200 bg-white shadow-xs">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-slate-700">Green LED (Safe)</span>
               <span id="led-green-bulb" class="led-indicator led-green-on"></span>
             </div>
-            <div class="mt-2 text-xs text-slate-500">Pin GPIO 26</div>
+            <div class="mt-2 text-xs text-slate-500">NodeMCU Pin D7 (GPIO 13)</div>
             <div id="led-green-state" class="text-sm font-bold text-emerald-600 mt-0.5">HIGH (GLOWING)</div>
           </div>
 
-          <!-- Red LED Pin 27 -->
+          <!-- Red LED Pin D1 -->
           <div class="p-3 rounded-xl border border-slate-200 bg-white shadow-xs">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-slate-700">Red LED (Alert)</span>
               <span id="led-red-bulb" class="led-indicator led-red-off"></span>
             </div>
-            <div class="mt-2 text-xs text-slate-500">Pin GPIO 27</div>
+            <div class="mt-2 text-xs text-slate-500">NodeMCU Pin D1 (GPIO 5)</div>
             <div id="led-red-state" class="text-sm font-bold text-slate-400 mt-0.5">LOW (OFF)</div>
           </div>
 
-          <!-- Buzzer Pin 25 -->
+          <!-- Buzzer Pin D6 -->
           <div class="p-3 rounded-xl border border-slate-200 bg-white shadow-xs">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-slate-700">Piezo Buzzer</span>
               <i id="buzzer-icon" data-lucide="volume-x" class="w-4 h-4 text-slate-400"></i>
             </div>
-            <div class="mt-2 text-xs text-slate-500">Pin GPIO 25</div>
+            <div class="mt-2 text-xs text-slate-500">NodeMCU Pin D6 (GPIO 12)</div>
             <div id="buzzer-state" class="text-sm font-bold text-slate-500 mt-0.5">OFF (SILENT)</div>
           </div>
 
-          <!-- Water Sensor Pin 34 -->
+          <!-- Water Sensor Pin D5 -->
           <div class="p-3 rounded-xl border border-slate-200 bg-white shadow-xs">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-slate-700">Water Sensor</span>
               <i id="sensor-icon" data-lucide="check" class="w-4 h-4 text-emerald-500"></i>
             </div>
-            <div class="mt-2 text-xs text-slate-500">Pin GPIO 34</div>
+            <div class="mt-2 text-xs text-slate-500">NodeMCU Pin D5 (GPIO 14)</div>
             <div id="sensor-pin-state" class="text-sm font-bold text-emerald-600 mt-0.5">DRY (0)</div>
           </div>
 
@@ -116,7 +116,7 @@
     <div class="flex items-center justify-between pb-4 border-b border-slate-100">
       <div>
         <h3 class="text-base font-bold text-slate-900">Live Reading Stream</h3>
-        <p class="text-xs text-slate-500 mt-0.5">Latest high-frequency packets from ESP32 client</p>
+        <p class="text-xs text-slate-500 mt-0.5">Latest high-frequency packets from ESP8266 client</p>
       </div>
       <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
         <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-ping"></span>
@@ -262,7 +262,7 @@
           </td>
           <td class="py-2.5 px-3 font-mono font-bold">${r.sensor_value}</td>
           <td class="py-2.5 px-3 font-mono text-slate-500">${r.wifi_rssi ? r.wifi_rssi + ' dBm' : 'N/A'}</td>
-          <td class="py-2.5 px-3 text-slate-500">${r.is_simulated ? '<span class="text-amber-600 font-semibold">Simulated</span>' : '<span class="text-sky-600 font-semibold">ESP32 Hardware</span>'}</td>
+          <td class="py-2.5 px-3 text-slate-500">${r.is_simulated ? '<span class="text-amber-600 font-semibold">Simulated</span>' : '<span class="text-sky-600 font-semibold">ESP8266 NodeMCU</span>'}</td>
         </tr>
       `).join('');
     } catch(err) {

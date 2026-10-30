@@ -20,12 +20,29 @@ init_database(app)
 # -------------------------------------------------------------------------
 # Helper Functions
 # -------------------------------------------------------------------------
+def resolve_target_device_id(requested_id=None):
+    """
+    Intelligently resolves device ID:
+    If a specific ID is asked for, use it.
+    Otherwise, automatically pick the most recently active hardware (ESP8266 or ESP32).
+    """
+    if requested_id and requested_id.strip():
+        return requested_id.strip()
+    latest_reading = SensorReading.query.order_by(SensorReading.recorded_at.desc()).first()
+    if latest_reading:
+        return latest_reading.device_id
+    latest_device = Device.query.order_by(Device.last_seen.desc()).first()
+    if latest_device:
+        return latest_device.id
+    return 'ESP8266_LEAK_01'
+
 def get_or_create_device(device_id, device_name=None):
     device = Device.query.filter_by(id=device_id).first()
     if not device:
+        dev_label = "ESP8266 NodeMCU" if "8266" in device_id else "ESP32"
         device = Device(
             id=device_id,
-            device_name=device_name or f"ESP32 Device ({device_id})",
+            device_name=device_name or f"{dev_label} Water Leakage Monitor ({device_id})",
             device_status='offline'
         )
         db.session.add(device)
@@ -69,7 +86,7 @@ def about():
     return render_template('about.html', active_page='about')
 
 
-# -------------------------------------------------------------------------
+# ------------------------------ -------------------------------------------
 # REST API Endpoints
 # -------------------------------------------------------------------------
 
@@ -84,7 +101,7 @@ def receive_sensor_data():
     if not data:
         return jsonify({'status': 'error', 'message': 'Invalid or empty JSON body'}), 400
 
-    device_id = data.get('device_id', 'ESP32_LEAK_01').strip()
+    device_id = data.get('device_id', 'ESP8266_LEAK_01').strip()
     sensor_name = data.get('sensor_name', 'Water Surface Sensor').strip()
     
     # Value parsing (0 or 1)
@@ -209,8 +226,8 @@ def receive_sensor_data():
 @app.route('/api/latest-reading', methods=['GET'])
 def get_latest_reading():
     """Returns the most recent sensor reading, device status, and any active leakage event."""
-    device_id = request.args.get('device_id', 'ESP32_LEAK_01')
-    device = Device.query.filter_by(id=device_id).first()
+    device_id = resolve_target_device_id(request.args.get('device_id'))
+    device = get_or_create_device(device_id)
     
     threshold = app.config['DEVICE_OFFLINE_THRESHOLD_SECONDS']
     device_dict = device.to_dict(threshold) if device else None
@@ -242,7 +259,7 @@ def get_readings():
     Returns historical sensor readings with filtering (time range, wet/dry status, search)
     and pagination.
     """
-    device_id = request.args.get('device_id', 'ESP32_LEAK_01')
+    device_id = resolve_target_device_id(request.args.get('device_id'))
     time_range = request.args.get('range', '24h') # '1h', '24h', '7d', 'all'
     status_filter = request.args.get('status', 'all').upper() # 'all', 'WET', 'DRY'
     limit = min(int(request.args.get('limit', 50)), 500)
@@ -280,8 +297,8 @@ def get_readings():
 @app.route('/api/statistics', methods=['GET'])
 def get_statistics():
     """Returns aggregated monitoring statistics."""
-    device_id = request.args.get('device_id', 'ESP32_LEAK_01')
-    device = Device.query.filter_by(id=device_id).first()
+    device_id = resolve_target_device_id(request.args.get('device_id'))
+    device = get_or_create_device(device_id)
     threshold = app.config['DEVICE_OFFLINE_THRESHOLD_SECONDS']
     dev_dict = device.to_dict(threshold) if device else {}
 
@@ -319,8 +336,8 @@ def get_statistics():
 
 @app.route('/api/device-status', methods=['GET'])
 def get_device_status():
-    """Returns detailed connectivity & telemetry about the ESP32 node."""
-    device_id = request.args.get('device_id', 'ESP32_LEAK_01')
+    """Returns detailed connectivity & telemetry about the ESP8266/ESP32 node."""
+    device_id = resolve_target_device_id(request.args.get('device_id'))
     device = get_or_create_device(device_id)
     threshold = app.config['DEVICE_OFFLINE_THRESHOLD_SECONDS']
     info = device.to_dict(threshold)
@@ -359,7 +376,7 @@ def get_device_status():
 @app.route('/api/alerts', methods=['GET'])
 def get_alerts():
     """Returns leakage alerts and incidents history."""
-    device_id = request.args.get('device_id', 'ESP32_LEAK_01')
+    device_id = resolve_target_device_id(request.args.get('device_id'))
     status_filter = request.args.get('status', 'all').upper()
     limit = min(int(request.args.get('limit', 100)), 500)
 
@@ -397,7 +414,7 @@ def simulate_sensor():
     """
     Simulation mode endpoint:
     Allows testing wet/dry transitions directly from the dashboard or testing tools
-    when the physical ESP32 is offline or in lab testing.
+    when the physical ESP8266 is offline or in lab testing.
     Clearly marks records with `is_simulated = True`.
     """
     data = request.get_json(silent=True) or {}
@@ -405,10 +422,11 @@ def simulate_sensor():
     if state not in ('WET', 'DRY'):
         state = 'WET'
     sensor_val = 1 if state == 'WET' else 0
+    device_id = data.get('device_id') or resolve_target_device_id()
 
     sim_payload = {
-        'device_id': 'ESP32_LEAK_01',
-        'sensor_name': 'Water Surface Sensor (Simulated)',
+        'device_id': device_id,
+        'sensor_name': 'Water Surface Sensor (NodeMCU D5)',
         'sensor_value': sensor_val,
         'water_status': state,
         'wifi_rssi': -58,
@@ -425,7 +443,7 @@ def simulate_sensor():
 def export_csv():
     """Generates and downloads CSV reports for sensor readings or leakage events."""
     export_type = request.args.get('type', 'readings').lower()
-    device_id = request.args.get('device_id', 'ESP32_LEAK_01')
+    device_id = resolve_target_device_id(request.args.get('device_id'))
 
     output = io.StringIO()
     writer = csv.writer(output)

@@ -12,10 +12,10 @@
       MCA Final Year IoT Project
     </div>
     <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
-      Smart Water Leakage Detection and Real-Time Monitoring System Using ESP32
+      Smart Water Leakage Detection and Real-Time Monitoring System Using ESP8266 NodeMCU
     </h2>
     <p class="text-sm text-slate-300 mt-2 leading-relaxed max-w-3xl">
-      An industrial-grade Internet of Things (IoT) solution engineered to provide zero-latency water leakage detection, local hardware alarm failover, and cloud/edge real-time telemetry analytics using an ESP32 microcontroller, Flask backend, PostgreSQL database, and Docker containerization.
+      An industrial-grade Internet of Things (IoT) solution engineered to provide zero-latency water leakage detection, local hardware alarm failover, and cloud/edge real-time telemetry analytics using an ESP8266 NodeMCU microcontroller, Flask backend, PostgreSQL database, and Docker containerization.
     </p>
   </div>
 
@@ -31,9 +31,9 @@
         <div>
           <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs mb-2">1</div>
           <h4 class="text-sm font-bold text-slate-800">Edge Sensing</h4>
-          <p class="text-xs text-slate-500 mt-1">Water surface sensor detects moisture conductance on GPIO 34.</p>
+          <p class="text-xs text-slate-500 mt-1">Water surface sensor detects moisture conductance on NodeMCU Pin D5 (GPIO 14).</p>
         </div>
-        <div class="mt-3 text-[11px] font-mono text-slate-400">GPIO 34 &bull; ADC1</div>
+        <div class="mt-3 text-[11px] font-mono text-slate-400">Pin D5 &bull; GPIO 14</div>
       </div>
 
       <!-- Stage 2 -->
@@ -41,7 +41,7 @@
         <div>
           <div class="w-8 h-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-bold text-xs mb-2">2</div>
           <h4 class="text-sm font-bold text-slate-800">Instant Local Alarm</h4>
-          <p class="text-xs text-slate-500 mt-1">Autonomous edge failover: Buzzer (GPIO 25) &amp; Red LED (GPIO 27) trigger in &lt;10ms.</p>
+          <p class="text-xs text-slate-500 mt-1">Autonomous edge failover: Buzzer (D6/GPIO 12) &amp; Red LED (D1/GPIO 5) trigger in &lt;10ms.</p>
         </div>
         <div class="mt-3 text-[11px] font-mono text-slate-400">Offline Protected</div>
       </div>
@@ -51,7 +51,7 @@
         <div>
           <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs mb-2">3</div>
           <h4 class="text-sm font-bold text-slate-800">REST Telemetry</h4>
-          <p class="text-xs text-slate-500 mt-1">ESP32 sends HTTP POST JSON payload to Flask backend with Wi-Fi RSSI.</p>
+          <p class="text-xs text-slate-500 mt-1">ESP8266 NodeMCU sends HTTPS POST JSON payload to Flask backend with Wi-Fi RSSI.</p>
         </div>
         <div class="mt-3 text-[11px] font-mono text-slate-400">HTTP POST &bull; JSON</div>
       </div>
@@ -107,7 +107,7 @@
         </li>
         <li class="flex items-center space-x-2">
           <i data-lucide="shield" class="w-4 h-4 text-sky-500 shrink-0"></i>
-          <span><strong>Heartbeat Telemetry:</strong> Automatic detection of offline ESP32 units within 15 seconds.</span>
+          <span><strong>Heartbeat Telemetry:</strong> Automatic detection of offline ESP8266 units within 15 seconds.</span>
         </li>
         <li class="flex items-center space-x-2">
           <i data-lucide="shield" class="w-4 h-4 text-sky-500 shrink-0"></i>

@@ -1,7 +1,7 @@
-# Smart Water Leakage Detection and Real-Time Monitoring System Using ESP32
+# Smart Water Leakage Detection and Real-Time Monitoring System Using ESP8266 NodeMCU
 **MCA Final Year IoT Project**
 
-A full-stack, enterprise-grade IoT water leakage detection and monitoring platform. This system connects physical ESP32 edge hardware to a modern responsive web dashboard backed by Python Flask, PostgreSQL, and Docker containerization.
+A full-stack, enterprise-grade IoT water leakage detection and monitoring platform. This system connects physical ESP8266 NodeMCU edge hardware to a modern responsive web dashboard backed by Python Flask, PostgreSQL, and Docker containerization.
 
 ---
 
@@ -13,7 +13,7 @@ Water leakage in commercial, industrial, or residential spaces causes catastroph
   - **Red LED** turns **ON** (warning alert).
   - **Green LED** turns **OFF**.
   - **Active Buzzer** sounds an immediate acoustic **ALARM**.
-  - ESP32 transmits telemetry payload (JSON) via Wi-Fi to Flask REST API.
+  - ESP8266 NodeMCU transmits telemetry payload (JSON) via Wi-Fi to Flask REST API over HTTPS.
   - Web dashboard immediately transitions to the **CRITICAL ALARM** banner without reloading.
   - A new **Leakage Incident Event** is registered in PostgreSQL with timestamp.
 
@@ -21,29 +21,31 @@ Water leakage in commercial, industrial, or residential spaces causes catastroph
   - **Green LED** turns **ON** (safe indicator).
   - **Red LED** turns **OFF**.
   - **Active Buzzer** remains **OFF (Silent)**.
-  - ESP32 transmits updated dry baseline reading.
+  - ESP8266 NodeMCU transmits updated dry baseline reading.
   - Web dashboard displays **NO LEAKAGE DETECTED**.
   - Active leakage incidents are marked as **RESOLVED** and incident duration is calculated.
 
 - **Autonomous Failover (Offline Security):**
-  - The physical buzzer and LEDs operate directly on ESP32 GPIO logic independently of Wi-Fi or backend server availability.
+  - The physical buzzer and LEDs operate directly on ESP8266 GPIO logic independently of Wi-Fi or backend server availability.
 
 ---
 
-## 2. Hardware Connections (ESP32 NodeMCU-32S)
+## 2. Hardware Connections (ESP8266 NodeMCU)
 
-| Component | Component Pin | ESP32 Pin | Purpose |
-| :--- | :--- | :--- | :--- |
-| **Water Sensor** | S (Signal / Digital Out) | **GPIO 34** | Digital Input (1 = Wet, 0 = Dry) |
-| **Water Sensor** | + (VCC) | **3V3** | 3.3V DC Power Supply |
-| **Water Sensor** | - (GND) | **GND** | Ground |
-| **Active Buzzer** | I/O (Signal) | **GPIO 25** | Digital Output (HIGH = Sound, LOW = Silent) |
-| **Active Buzzer** | VCC | **3V3** | 3.3V Power |
-| **Active Buzzer** | GND | **GND** | Ground |
-| **Green LED** | Anode (+) with 220Ω resistor | **GPIO 26** | Safe baseline indicator |
-| **Green LED** | Cathode (-) | **GND** | Ground |
-| **Red LED** | Anode (+) with 220Ω resistor | **GPIO 27** | Emergency alarm indicator |
-| **Red LED** | Cathode (-) | **GND** | Ground |
+> **Important:** ESP8266 NodeMCU only supports **2.4 GHz Wi-Fi**. Ensure your hotspot/router is broadcasting on the 2.4 GHz band.
+
+| Component | Component Pin | NodeMCU Pin | GPIO | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **Water Sensor** | S (Signal / Digital Out) | **D5** | GPIO 14 | Digital Input (HIGH = Wet, LOW = Dry) |
+| **Water Sensor** | + (VCC) | **3V3** | — | 3.3V DC Power Supply |
+| **Water Sensor** | - (GND) | **GND** | — | Ground |
+| **Active Buzzer** | I/O (Signal) | **D6** | GPIO 12 | Digital Output (HIGH = Sound, LOW = Silent) |
+| **Active Buzzer** | VCC | **3V3** | — | 3.3V Power |
+| **Active Buzzer** | GND | **GND** | — | Ground |
+| **Green LED** | Anode (+) with 220Ω resistor | **D7** | GPIO 13 | Safe baseline indicator |
+| **Green LED** | Cathode (-) | **GND** | — | Ground |
+| **Red LED** | Anode (+) with 220Ω resistor | **D1** | GPIO 5 | Emergency alarm indicator |
+| **Red LED** | Cathode (-) | **GND** | — | Ground |
 
 ---
 
@@ -64,17 +66,20 @@ Water leakage in commercial, industrial, or residential spaces causes catastroph
   - PostgreSQL 15 (`water_leakage_db`)
   - Automatic fallback to SQLite (`water_leakage.db`) for immediate zero-config local testing
 - **IoT Firmware:**
-  - ESP32 C++ / Arduino (`code.ino` and `esp32/water_leakage_detector.ino`)
-  - HTTPClient & WiFi library
+  - ESP8266 NodeMCU C++ / Arduino (`code.ino`)
+  - `ESP8266WiFi.h`, `ESP8266HTTPClient.h`, `WiFiClientSecure.h`
+  - HTTPS POST with fingerprint bypass for Render.com cloud endpoint
 - **Containerization:**
   - Docker & Docker Compose (Multi-container architecture with persistent data volumes)
+- **Cloud Deployment:**
+  - Render.com (Web Service + PostgreSQL via `render.yaml` Blueprint)
 
 ---
 
 ## 4. Project Directory Structure
 
 ```text
-c:\Users\User\Desktop\iot\
+iot/
 ├── app.py                     # Flask backend routing & REST APIs
 ├── config.py                  # Database & environment configurations
 ├── database.py                # SQLAlchemy models (devices, readings, events, logs)
@@ -82,12 +87,11 @@ c:\Users\User\Desktop\iot\
 ├── requirements.txt           # Python dependencies
 ├── Dockerfile                 # Production Docker build file
 ├── docker-compose.yml         # Compose configuration (Flask + PostgreSQL)
+├── render.yaml                # Render.com Blueprint for one-click cloud deploy
 ├── .env.example               # Environment variables template
 ├── .gitignore                 # Git ignore file
 ├── README.md                  # Complete project documentation
-├── code.ino                   # ESP32 Arduino firmware (root file)
-├── esp32/
-│   └── water_leakage_detector.ino # Standalone ESP32 production firmware
+├── code.ino                   # ESP8266 NodeMCU Arduino firmware
 ├── static/
 │   ├── css/
 │   │   └── style.css          # Custom styling, animations & LED visualizers
@@ -96,136 +100,121 @@ c:\Users\User\Desktop\iot\
 │       ├── chart-manager.js   # Chart.js initialization & 1h/24h/7d filtering
 │       └── analytics.js       # Historical trends & distribution charts
 └── templates/
-    ├── base.html              # Master layout with sidebar navigation & top bar
-    ├── index.html             # Main Dashboard (cards, alert banner, chart, table, logs)
-    ├── live.html              # Live hardware pinout mirror & audio alarm
-    ├── history.html           # Full historical logs with pagination & filters
-    ├── alerts.html            # Leakage incident tracking & resolution duration
-    ├── analytics.html         # Statistical analytics & graphical trends
-    ├── device.html            # ESP32 pinout diagram & hardware telemetry
-    ├── settings.html          # Polling rate configuration & lab simulator
-    └── about.html             # System architecture & project documentation
+    ├── base.html              # Master layout: sidebar, navbar, top device pill
+    ├── index.html             # Main dashboard: live cards & activity log
+    ├── live.html              # Live hardware mirror (LED/buzzer visual)
+    ├── device.html            # Full device spec & ESP8266 NodeMCU pinout
+    ├── history.html           # Paginated sensor readings table
+    ├── alerts.html            # Leakage incident events & resolution log
+    ├── analytics.html         # Chart.js telemetry & distribution graphs
+    ├── settings.html          # Simulation controls & system settings
+    └── about.html             # Project overview & system architecture
 ```
 
 ---
 
-## 5. How to Run the Application
+## 5. Running the Project
 
-### Option A: Hosting on Render with Blueprints (Cloud Deployment)
+### Option A: Cloud Deployment on Render.com (Live)
 
-This repository includes a production `render.yaml` Blueprint specification. Render will automatically provision both the **Web Service** (Flask) and a **Managed PostgreSQL Database** in one click.
+The project is deployed live at:
+**[https://water-leakage-monitor.onrender.com](https://water-leakage-monitor.onrender.com)**
 
-1. **Push your project to GitHub**:
-   ```bash
-   cd c:\Users\User\Desktop\iot
-   git init
-   git add .
-   git commit -m "Deploy Smart Water Leakage Detection System"
-   git branch -M main
-   git remote add origin https://github.com/YOUR_GITHUB_USERNAME/water-leakage-monitoring.git
-   git push -u origin main
-   ```
-
-2. **Deploy on Render**:
-   - Go to [Render Dashboard](https://dashboard.render.com).
-   - Click **New +** and select **Blueprint**.
-   - Connect your GitHub repository.
-   - Render will detect `render.yaml` and show:
-     - **Web Service**: `water-leakage-monitor` (Python 3.11 + Gunicorn)
-     - **Database**: `water-leakage-db` (PostgreSQL 15)
-   - Click **Apply**. Render will automatically build, link the database via `DATABASE_URL`, initialize tables, and launch your live site!
-
-3. **Get Your Cloud URL**:
-   - Your site will be live at: `https://water-leakage-monitor.onrender.com` (or your assigned sub-domain).
-   - In `code.ino`, set `serverUrl = "https://your-service-name.onrender.com/api/sensor-data"`.
+To deploy your own instance:
+1. Fork/clone this repository to your GitHub account.
+2. Go to [render.com](https://render.com), create an account, and click **New Blueprint**.
+3. Connect your GitHub repo — Render reads `render.yaml` automatically.
+4. Set the `DATABASE_URL` environment variable to your Render PostgreSQL connection string.
+5. In `code.ino`, set `serverUrl = "https://your-service-name.onrender.com/api/sensor-data"`.
 
 ---
 
-### Option B: Running with Docker & Docker Compose (Local Containerization)
+### Option B: Running with Docker & Docker Compose (Local)
 
-Ensure Docker Desktop is installed and running on your system.
+Ensure Docker Desktop is installed and running.
 
-1. **Clone or open the project folder in terminal:**
+1. Open terminal in the project folder:
    ```bash
    cd c:\Users\User\Desktop\iot
    ```
 
-2. **Start the containers using Docker Compose:**
+2. Start the containers:
    ```bash
    docker-compose up --build
    ```
 
-3. **Open the web dashboard in your browser:**
-   ```text
+3. Open the web dashboard:
+   ```
    http://localhost:5000
    ```
 
-*The PostgreSQL database will automatically initialize using `init_db.sql` and persist all readings in a Docker volume.*
-
 ---
 
-### Option B: Running Locally with Python (Fast Zero-Config Development)
+### Option C: Running Locally with Python (Fast Zero-Config)
 
-If you don't have Docker installed, you can run the backend directly with Python. The backend automatically connects to PostgreSQL if available, or falls back to an embedded SQLite database (`water_leakage.db`) so you can run immediately without setup.
-
-1. **Open Windows PowerShell or Command Prompt:**
+1. Open PowerShell in the project folder:
    ```bash
    cd c:\Users\User\Desktop\iot
    ```
 
-2. **(Optional) Create and activate a Python virtual environment:**
+2. (Optional) Create and activate a virtual environment:
    ```bash
    python -m venv venv
    .\venv\Scripts\activate
    ```
 
-3. **Install dependencies:**
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Start the Flask server:**
+4. Start Flask:
    ```bash
    python app.py
    ```
 
-5. **Access the application:**
-   - Web Dashboard: `http://localhost:5000`
-   - From any phone/tablet on your Wi-Fi: `http://<YOUR_COMPUTER_IP>:5000`
+5. Access the application:
+   - Dashboard: `http://localhost:5000`
+   - From any device on the same Wi-Fi: `http://<YOUR_COMPUTER_IP>:5000`
 
 ---
 
-## 6. Uploading Code to the Physical ESP32
+## 6. Uploading Firmware to ESP8266 NodeMCU
 
-1. Open `code.ino` (or `esp32/water_leakage_detector.ino`) in the **Arduino IDE**.
-2. Install the **ESP32 by Espressif Systems** board package in Arduino IDE:
-   - Go to `Tools` -> `Board` -> `Boards Manager` -> search for `esp32` and install.
-3. Configure your network credentials at lines 28–36 in `code.ino`:
+1. Open `code.ino` in the **Arduino IDE** (version 1.8.x or 2.x).
+2. Install the **ESP8266 by ESP8266 Community** board package:
+   - Go to `File` -> `Preferences` -> paste this URL in "Additional Board Manager URLs":
+     ```
+     http://arduino.esp8266.com/stable/package_esp8266com_index.json
+     ```
+   - Then go to `Tools` -> `Board` -> `Boards Manager` -> search `esp8266` and install.
+3. Select **NodeMCU 1.0 (ESP-12E Module)** under `Tools -> Board`.
+4. Set your credentials in `code.ino`:
    ```cpp
-   const char* ssid     = "YOUR_WIFI_NAME";
+   const char* ssid     = "YOUR_WIFI_NAME";      // Must be 2.4 GHz!
    const char* password = "YOUR_WIFI_PASSWORD";
-
-   // Replace with your PC's Wi-Fi IP address (run 'ipconfig' in CMD)
-   const char* serverUrl = "http://192.168.1.100:5000/api/sensor-data";
+   const char* serverUrl = "https://water-leakage-monitor.onrender.com/api/sensor-data";
    ```
-4. Select `ESP32 Dev Module` under `Tools -> Board`, choose your COM port, and click **Upload**.
-5. Open the **Serial Monitor** at **115200 baud** to view real-time Wi-Fi connection and sensor telemetry.
+5. Choose the correct COM port under `Tools -> Port`.
+6. Click **Upload** (right arrow button).
+7. Open **Serial Monitor** at **115200 baud** to view live connection and sensor logs.
+
+> **Note:** ESP8266 NodeMCU only supports **2.4 GHz** Wi-Fi bands. If using a mobile hotspot, ensure the AP band is set to 2.4 GHz in your phone's hotspot settings.
 
 ---
 
 ## 7. Lab Simulation Mode (Testing Without Hardware)
 
-If you are demonstrating this project during an MCA evaluation and do not have the physical hardware connected:
+If demonstrating during an MCA evaluation without physical hardware:
 
-1. Look at the top right of the navigation header on any page, or visit `/settings`.
-2. Click **Sim Wet** to simulate an immediate water leakage event:
-   - Notice the top alert banner pulses **RED: WATER LEAKAGE DETECTED!**.
-   - The buzzer actuator turns on in the Live Hardware Mirror (`/live`).
+1. Visit the dashboard at `https://water-leakage-monitor.onrender.com` (or `localhost:5000`).
+2. Click **Sim Wet** in the top navbar or Settings page:
+   - The top alert banner pulses **RED: WATER LEAKAGE DETECTED!**
    - A critical incident is recorded in PostgreSQL.
-3. Click **Sim Dry** to simulate drying the sensor:
-   - Notice the banner restores to **GREEN: NO LEAKAGE DETECTED**.
-   - The incident duration in seconds is logged and resolved.
-4. All simulated readings are stored in the database and explicitly marked with `is_simulated = true` so test data remains transparent and clean.
+3. Click **Sim Dry** to resolve:
+   - Banner restores to **GREEN: NO LEAKAGE DETECTED**
+   - Incident duration is logged and marked resolved.
+4. All simulated readings are marked `is_simulated = true` in the database.
 
 ---
 
@@ -233,27 +222,39 @@ If you are demonstrating this project during an MCA evaluation and do not have t
 
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
-| `/api/sensor-data` | `POST` | Ingestion endpoint called by ESP32 or simulated sensors. |
-| `/api/latest-reading` | `GET` | Returns the latest sensor packet, active alerts, and device status. |
-| `/api/readings` | `GET` | Returns time-filtered (`1h`, `24h`, `7d`, `all`) and paginated sensor readings. |
+| `/api/sensor-data` | `POST` | Ingestion endpoint called by ESP8266 NodeMCU or simulator. |
+| `/api/latest-reading` | `GET` | Returns latest sensor packet, active alerts, and device status. |
+| `/api/readings` | `GET` | Returns time-filtered (`1h`, `24h`, `7d`, `all`) sensor readings. |
 | `/api/statistics` | `GET` | Returns total readings, wet/dry counts, and incident metrics. |
-| `/api/device-status` | `GET` | Returns ESP32 Wi-Fi RSSI, IP address, and online/offline heartbeat state. |
-| `/api/alerts` | `GET` | Returns active and resolved leakage events with calculated duration. |
-| `/api/export-csv` | `GET` | Generates downloadable CSV files (`type=readings` or `type=events`). |
+| `/api/device-status` | `GET` | Returns ESP8266 Wi-Fi RSSI, IP address, and heartbeat state. |
+| `/api/alerts` | `GET` | Returns active and resolved leakage events with duration. |
+| `/api/export-csv` | `GET` | Generates downloadable CSV (`type=readings` or `type=events`). |
 | `/api/simulate` | `POST` | Lab simulation trigger (`{"state": "WET"}` or `{"state": "DRY"}`). |
 
 ---
 
 ## 9. Academic Project Verification Checklist
 
-- [x] Autonomous hardware alarm works on ESP32 (Buzzer sounds ONLY when wet, silent when dry).
+- [x] Autonomous hardware alarm works on ESP8266 NodeMCU (Buzzer sounds ONLY when wet).
 - [x] Red LED glows when wet, Green LED glows when dry.
-- [x] Real-time HTTP POST telemetry transmission from ESP32 to Flask.
+- [x] Real-time HTTPS POST telemetry from ESP8266 to Flask REST API.
 - [x] PostgreSQL relational database schema with indexed tables.
 - [x] Dockerfile & Docker Compose containerization with persistent volumes.
 - [x] Interactive Chart.js timeline with 1h/24h/7d range filtering.
 - [x] Searchable and exportable CSV incident and sensor history.
-- [x] Live hardware pinout visualizer (GPIO 34, 25, 26, 27).
+- [x] Live hardware pinout visualizer (D5/D6/D7/D1 NodeMCU pins).
 - [x] Responsive layout with Lucide icons and dark navy aesthetic.
 - [x] Clearly labelled lab simulation mode for presentations.
+- [x] One-click cloud deployment via Render.com Blueprint (`render.yaml`).
 
+---
+
+## 10. Device ID Reference
+
+| Device | ID |
+| :--- | :--- |
+| ESP8266 NodeMCU (Active) | `ESP8266_LEAK_01` |
+
+---
+
+*MCA Final Year IoT Project — Smart Water Leakage Detection System*

@@ -65,12 +65,14 @@ CREATE TABLE system_logs (
 
 CREATE INDEX idx_logs_created_at ON system_logs (created_at DESC);
 
--- Seed initial device record for ESP32
+-- Seed initial device records for ESP8266 and ESP32
 INSERT INTO devices (id, device_name, device_status, last_seen, created_at)
-VALUES ('ESP32_LEAK_01', 'ESP32 Water Leakage Monitor #1', 'offline', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES 
+    ('ESP8266_LEAK_01', 'ESP8266 NodeMCU Water Leakage Monitor', 'offline', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('ESP32_LEAK_01', 'ESP32 Water Leakage Monitor', 'offline', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed initial system log
 INSERT INTO system_logs (log_level, event_category, message, device_id)
-VALUES ('INFO', 'SYSTEM_STARTUP', 'Smart Water Leakage Database initialized successfully.', 'ESP32_LEAK_01');
+VALUES ('INFO', 'SYSTEM_STARTUP', 'Smart Water Leakage Database initialized successfully for ESP8266/ESP32.', 'ESP8266_LEAK_01');
 

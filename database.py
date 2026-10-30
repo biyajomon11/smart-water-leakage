@@ -151,22 +151,25 @@ def init_database(app):
         with app.app_context():
             db.create_all()
             
-            # Ensure default device exists
-            default_device = Device.query.filter_by(id='ESP32_LEAK_01').first()
-            if not default_device:
-                default_device = Device(
-                    id='ESP32_LEAK_01',
-                    device_name='ESP32 Water Leakage Monitor #1',
-                    device_status='offline'
-                )
-                db.session.add(default_device)
-                db.session.commit()
+            # Ensure default ESP8266 and ESP32 devices exist
+            for dev_id, dev_name in [
+                ('ESP8266_LEAK_01', 'ESP8266 NodeMCU Water Leakage Monitor'),
+                ('ESP32_LEAK_01', 'ESP32 Water Leakage Monitor')
+            ]:
+                existing = Device.query.filter_by(id=dev_id).first()
+                if not existing:
+                    db.session.add(Device(
+                        id=dev_id,
+                        device_name=dev_name,
+                        device_status='offline'
+                    ))
+            db.session.commit()
                 
             log_system_event(
                 category='SYSTEM',
-                message='Smart Water Leakage Database connected & initialized.',
+                message='Smart Water Leakage Database connected & initialized for ESP8266/ESP32.',
                 log_level='INFO',
-                device_id='ESP32_LEAK_01'
+                device_id='ESP8266_LEAK_01'
             )
             logger.info("Database initialized successfully.")
     except Exception as err:
@@ -177,20 +180,23 @@ def init_database(app):
         db.init_app(app)
         with app.app_context():
             db.create_all()
-            default_device = Device.query.filter_by(id='ESP32_LEAK_01').first()
-            if not default_device:
-                default_device = Device(
-                    id='ESP32_LEAK_01',
-                    device_name='ESP32 Water Leakage Monitor #1',
-                    device_status='offline'
-                )
-                db.session.add(default_device)
-                db.session.commit()
+            for dev_id, dev_name in [
+                ('ESP8266_LEAK_01', 'ESP8266 NodeMCU Water Leakage Monitor'),
+                ('ESP32_LEAK_01', 'ESP32 Water Leakage Monitor')
+            ]:
+                existing = Device.query.filter_by(id=dev_id).first()
+                if not existing:
+                    db.session.add(Device(
+                        id=dev_id,
+                        device_name=dev_name,
+                        device_status='offline'
+                    ))
+            db.session.commit()
             log_system_event(
                 category='SYSTEM',
                 message='Running with SQLite local database engine.',
                 log_level='INFO',
-                device_id='ESP32_LEAK_01'
+                device_id='ESP8266_LEAK_01'
             )
             logger.info("Fallback to SQLite successful. Database ready.")
 

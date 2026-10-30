@@ -66,11 +66,11 @@ function updateTelemetryUI(latestData, statsData, deviceData) {
     if (isOnline) {
       topDevPill.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200";
       topDevDot.className = "w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse";
-      topDevText.innerText = `ESP32: Online (${dev.seconds_since_last_seen !== null ? dev.seconds_since_last_seen + 's' : ''})`;
+      topDevText.innerText = `ESP8266: Online (${dev.seconds_since_last_seen !== null ? dev.seconds_since_last_seen + 's' : ''})`;
     } else {
       topDevPill.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200";
       topDevDot.className = "w-2 h-2 rounded-full bg-slate-400 mr-2";
-      topDevText.innerText = "ESP32: Offline";
+      topDevText.innerText = "ESP8266: Offline";
     }
   }
 
@@ -167,7 +167,7 @@ function updateTelemetryUI(latestData, statsData, deviceData) {
     }
   }
 
-  // Card 2: ESP32 Hardware Status
+  // Card 2: ESP8266 Hardware Status
   const cardHwStatus = document.getElementById('card-hw-status');
   const cardHwSub = document.getElementById('card-hw-sub');
   const cardHwIconBg = document.getElementById('card-hw-icon-bg');
@@ -264,7 +264,7 @@ function updateOfflineStatusUI() {
   const topDevPill = document.getElementById('top-device-pill');
   if (topDevPill) {
     topDevPill.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200";
-    topDevPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-400 mr-2"></span> ESP32: Offline';
+    topDevPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-400 mr-2"></span> ESP8266: Offline';
   }
 }
 

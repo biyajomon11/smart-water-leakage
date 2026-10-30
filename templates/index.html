@@ -20,7 +20,7 @@
             <span id="banner-pill" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
               NORMAL STATUS
             </span>
-            <span id="banner-device-tag" class="text-xs text-slate-500 font-mono">ESP32_LEAK_01</span>
+            <span id="banner-device-tag" class="text-xs text-slate-500 font-mono">ESP8266_LEAK_01</span>
           </div>
           <h2 id="banner-heading" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">
             NO LEAKAGE DETECTED
@@ -69,10 +69,10 @@
       </div>
     </div>
 
-    <!-- Card 2: ESP32 Hardware Status -->
+    <!-- Card 2: ESP8266 Hardware Status -->
     <div class="metric-card p-4 sm:p-5 flex flex-col justify-between">
       <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ESP32 Status</span>
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ESP8266 Status</span>
         <div id="card-hw-icon-bg" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
           <i data-lucide="cpu" class="w-4 h-4"></i>
         </div>
@@ -120,7 +120,7 @@
     <!-- Card 5: Current Sensor Logic Value (0 or 1) -->
     <div class="metric-card p-4 sm:p-5 flex flex-col justify-between">
       <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">GPIO 34 Logic</span>
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">NodeMCU Pin D5</span>
         <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
           <i data-lucide="binary" class="w-4 h-4"></i>
         </div>
@@ -130,7 +130,7 @@
           <span id="card-sensor-val" class="text-2xl font-extrabold font-mono text-slate-900">0</span>
           <span id="card-sensor-logic-tag" class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">LOW</span>
         </div>
-        <div class="text-xs text-slate-500 mt-1">Threshold: 1=Wet, 0=Dry</div>
+        <div class="text-xs text-slate-500 mt-1">GPIO 14: 1=Wet, 0=Dry</div>
       </div>
     </div>
 
@@ -294,7 +294,7 @@
               <i data-lucide="list-ordered" class="w-4 h-4 text-slate-700"></i>
               <span>System Activity Log</span>
             </h3>
-            <p class="text-xs text-slate-500 mt-0.5">ESP32 &amp; Database operations audit stream</p>
+            <p class="text-xs text-slate-500 mt-0.5">ESP8266 &amp; Database operations audit stream</p>
           </div>
           <button onclick="fetchSystemLogs()" class="p-1 rounded text-slate-400 hover:text-slate-600 transition" title="Refresh Logs">
             <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
