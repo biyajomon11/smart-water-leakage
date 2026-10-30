@@ -26,6 +26,5 @@ databases:
   # Managed PostgreSQL Database Service
   - name: water-leakage-db
     databaseName: water_leakage_db
-    user: postgres
+    user: water_user
     plan: free
-
