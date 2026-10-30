@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}About Project{% endblock %}
+{% block page_title %}About Project: Smart Water Leakage Detection System{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-5xl">
+
+  <!-- Project Overview Card -->
+  <div class="metric-card p-6 sm:p-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
+    <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-400/30 mb-3">
+      MCA Final Year IoT Project
+    </div>
+    <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
+      Smart Water Leakage Detection and Real-Time Monitoring System Using ESP32
+    </h2>
+    <p class="text-sm text-slate-300 mt-2 leading-relaxed max-w-3xl">
+      An industrial-grade Internet of Things (IoT) solution engineered to provide zero-latency water leakage detection, local hardware alarm failover, and cloud/edge real-time telemetry analytics using an ESP32 microcontroller, Flask backend, PostgreSQL database, and Docker containerization.
+    </p>
+  </div>
+
+  <!-- System Architecture Flowchart (Clean Visual) -->
+  <div class="metric-card p-6">
+    <h3 class="text-base font-bold text-slate-900 mb-1">System Architecture &amp; Data Pipeline</h3>
+    <p class="text-xs text-slate-500 mb-6">From edge surface sensing to containerized database storage and dashboard visualization</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+      
+      <!-- Stage 1 -->
+      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+        <div>
+          <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs mb-2">1</div>
+          <h4 class="text-sm font-bold text-slate-800">Edge Sensing</h4>
+          <p class="text-xs text-slate-500 mt-1">Water surface sensor detects moisture conductance on GPIO 34.</p>
+        </div>
+        <div class="mt-3 text-[11px] font-mono text-slate-400">GPIO 34 &bull; ADC1</div>
+      </div>
+
+      <!-- Stage 2 -->
+      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+        <div>
+          <div class="w-8 h-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-bold text-xs mb-2">2</div>
+          <h4 class="text-sm font-bold text-slate-800">Instant Local Alarm</h4>
+          <p class="text-xs text-slate-500 mt-1">Autonomous edge failover: Buzzer (GPIO 25) &amp; Red LED (GPIO 27) trigger in &lt;10ms.</p>
+        </div>
+        <div class="mt-3 text-[11px] font-mono text-slate-400">Offline Protected</div>
+      </div>
+
+      <!-- Stage 3 -->
+      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+        <div>
+          <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs mb-2">3</div>
+          <h4 class="text-sm font-bold text-slate-800">REST Telemetry</h4>
+          <p class="text-xs text-slate-500 mt-1">ESP32 sends HTTP POST JSON payload to Flask backend with Wi-Fi RSSI.</p>
+        </div>
+        <div class="mt-3 text-[11px] font-mono text-slate-400">HTTP POST &bull; JSON</div>
+      </div>
+
+      <!-- Stage 4 -->
+      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+        <div>
+          <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs mb-2">4</div>
+          <h4 class="text-sm font-bold text-slate-800">PostgreSQL &amp; Web UI</h4>
+          <p class="text-xs text-slate-500 mt-1">Persistent time-series storage, real-time Chart.js graph, and instant alerts.</p>
+        </div>
+        <div class="mt-3 text-[11px] font-mono text-slate-400">Docker &bull; SQL DB</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Technology Stack Breakdown -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    
+    <div class="metric-card p-6 space-y-3">
+      <h3 class="text-base font-bold text-slate-900">Software &amp; Frameworks</h3>
+      <ul class="space-y-2 text-xs text-slate-600">
+        <li class="flex items-center space-x-2">
+          <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0"></i>
+          <span><strong>Frontend:</strong> HTML5, CSS3, Tailwind CSS, Vanilla JavaScript, Chart.js, Lucide Icons</span>
+        </li>
+        <li class="flex items-center space-x-2">
+          <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0"></i>
+          <span><strong>Backend:</strong> Python 3.11, Flask REST API, Gunicorn WSGI, Flask-CORS</span>
+        </li>
+        <li class="flex items-center space-x-2">
+          <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0"></i>
+          <span><strong>Database:</strong> PostgreSQL 15 (with relational schema, indexes &amp; SQLite fallback)</span>
+        </li>
+        <li class="flex items-center space-x-2">
+          <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0"></i>
+          <span><strong>Containerization:</strong> Dockerfile &amp; Docker Compose with persistent storage volumes</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="metric-card p-6 space-y-3">
+      <h3 class="text-base font-bold text-slate-900">Key Features &amp; Safety Design</h3>
+      <ul class="space-y-2 text-xs text-slate-600">
+        <li class="flex items-center space-x-2">
+          <i data-lucide="shield" class="w-4 h-4 text-sky-500 shrink-0"></i>
+          <span><strong>Autonomous Hardware Operation:</strong> Physical alarm works even if Wi-Fi or server is offline.</span>
+        </li>
+        <li class="flex items-center space-x-2">
+          <i data-lucide="shield" class="w-4 h-4 text-sky-500 shrink-0"></i>
+          <span><strong>Zero False-Alarm Logic:</strong> Buzzer sounds ONLY when water is detected, completely silent when dry.</span>
+        </li>
+        <li class="flex items-center space-x-2">
+          <i data-lucide="shield" class="w-4 h-4 text-sky-500 shrink-0"></i>
+          <span><strong>Heartbeat Telemetry:</strong> Automatic detection of offline ESP32 units within 15 seconds.</span>
+        </li>
+        <li class="flex items-center space-x-2">
+          <i data-lucide="shield" class="w-4 h-4 text-sky-500 shrink-0"></i>
+          <span><strong>Audit &amp; Compliance:</strong> Incident resolution duration tracked and exportable as CSV.</span>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+

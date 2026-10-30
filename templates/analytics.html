@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics &amp; Reports{% endblock %}
+{% block page_title %}Analytics &amp; Historical Trends{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Top Metrics Summary Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    
+    <div class="metric-card p-5">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Readings Logged</span>
+      <div id="analytics-total" class="text-2xl font-black text-slate-900 mt-2">0</div>
+      <p class="text-xs text-slate-500 mt-1">Stored in PostgreSQL DB</p>
+    </div>
+
+    <div class="metric-card p-5">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Safe Dry Readings</span>
+      <div id="analytics-dry" class="text-2xl font-black text-emerald-600 mt-2">0</div>
+      <p id="analytics-dry-pct" class="text-xs text-slate-500 mt-1">100% of telemetry</p>
+    </div>
+
+    <div class="metric-card p-5">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Water Wet Readings</span>
+      <div id="analytics-wet" class="text-2xl font-black text-red-600 mt-2">0</div>
+      <p id="analytics-wet-pct" class="text-xs text-slate-500 mt-1">0% of telemetry</p>
+    </div>
+
+    <div class="metric-card p-5">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Leakage Incidents</span>
+      <div id="analytics-events" class="text-2xl font-black text-slate-900 mt-2">0</div>
+      <p id="analytics-avg-time" class="text-xs text-slate-500 mt-1">Avg duration: 0s</p>
+    </div>
+
+  </div>
+
+  <!-- Charts Row: Distribution Doughnut + Activity Trend Bar Chart -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Wet vs Dry Ratio (Doughnut Chart - 4 cols) -->
+    <div class="lg:col-span-4 metric-card p-5 sm:p-6 flex flex-col justify-between">
+      <div>
+        <h3 class="text-base font-bold text-slate-900">Moisture State Distribution</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Ratio of Dry Baseline vs. Water Trigger Events</p>
+        <div class="relative h-60 mt-4 flex items-center justify-center">
+          <canvas id="ratioChart"></canvas>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-around text-xs">
+        <span class="flex items-center text-slate-600">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 mr-2"></span>
+          Dry Baseline
+        </span>
+        <span class="flex items-center text-slate-600">
+          <span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span>
+          Water Leakage
+        </span>
+      </div>
+    </div>
+
+    <!-- Daily / Weekly Incident Trends (Bar Chart - 8 cols) -->
+    <div class="lg:col-span-8 metric-card p-5 sm:p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Leakage Incidents &amp; Duration Trends</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Frequency of leakage triggers across time periods</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <a href="/api/export-csv?type=readings" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold hover:bg-slate-50 shadow-xs inline-flex items-center space-x-1.5 transition">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>Export Readings CSV</span>
+            </a>
+            <a href="/api/export-csv?type=events" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 shadow-xs inline-flex items-center space-x-1.5 transition">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>Export Events CSV</span>
+            </a>
+          </div>
+        </div>
+        <div class="relative h-64 mt-4">
+          <canvas id="trendsChart"></canvas>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
+        <span>Data aggregated from PostgreSQL time-series logs</span>
+        <span class="text-sky-600 font-semibold">Continuous Ingestion</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tabular Summary Breakdown -->
+  <div class="metric-card p-5 sm:p-6">
+    <h3 class="text-base font-bold text-slate-900 mb-1">Analytical Metrics Breakdown</h3>
+    <p class="text-xs text-slate-500 mb-4">Statistical summary of smart water detector telemetry</p>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-slate-600">
+        <thead class="bg-slate-50 text-slate-500 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-200">
+          <tr>
+            <th class="py-2.5 px-3">Metric Category</th>
+            <th class="py-2.5 px-3">Recorded Value</th>
+            <th class="py-2.5 px-3">Target / Baseline</th>
+            <th class="py-2.5 px-3">Operational Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-normal">
+          <tr>
+            <td class="py-3 px-3 font-semibold text-slate-800">Total Telemetry Sample Packets</td>
+            <td id="table-total-packets" class="py-3 px-3 font-mono font-bold">0</td>
+            <td class="py-3 px-3 font-mono text-slate-500">&gt; 0 packets</td>
+            <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Operational</span></td>
+          </tr>
+          <tr>
+            <td class="py-3 px-3 font-semibold text-slate-800">Water Leakage Events Triggered</td>
+            <td id="table-total-events" class="py-3 px-3 font-mono font-bold text-red-600">0</td>
+            <td class="py-3 px-3 font-mono text-slate-500">0 (Safe Environment)</td>
+            <td class="py-3 px-3"><span id="table-event-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">Nominal</span></td>
+          </tr>
+          <tr>
+            <td class="py-3 px-3 font-semibold text-slate-800">Average Incident Clearing Time</td>
+            <td id="table-avg-clear" class="py-3 px-3 font-mono font-bold">0 sec</td>
+            <td class="py-3 px-3 font-mono text-slate-500">&lt; 60 seconds</td>
+            <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800">Automated</span></td>
+          </tr>
+          <tr>
+            <td class="py-3 px-3 font-semibold text-slate-800">Sensor Dry vs. Wet Ratio</td>
+            <td id="table-dry-ratio" class="py-3 px-3 font-mono font-bold text-emerald-600">100% Dry</td>
+            <td class="py-3 px-3 font-mono text-slate-500">&gt; 95% Dry</td>
+            <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Healthy</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    initAnalyticsCharts();
+  });
+</script>
+{% endblock %}
+

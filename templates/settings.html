@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings{% endblock %}
+{% block page_title %}System Configuration &amp; Lab Simulation{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-4xl">
+
+  <!-- Dashboard Refresh & Polling Preferences -->
+  <div class="metric-card p-5 sm:p-6">
+    <h3 class="text-base font-bold text-slate-900">Dashboard Telemetry Polling Rate</h3>
+    <p class="text-xs text-slate-500 mt-0.5">Controls how frequently the web dashboard polls the Flask backend for new readings.</p>
+
+    <div class="mt-4 grid grid-cols-1 sm:grid-cols-4 gap-3">
+      <button onclick="setPollingRate(1000)" id="rate-1000" class="p-3 rounded-xl border border-slate-200 text-center hover:border-sky-500 transition">
+        <div class="text-sm font-bold text-slate-800">1 Second</div>
+        <div class="text-[11px] text-slate-500 mt-0.5">Ultra Realtime</div>
+      </button>
+      <button onclick="setPollingRate(2000)" id="rate-2000" class="p-3 rounded-xl border-2 border-sky-600 bg-sky-50/50 text-center transition">
+        <div class="text-sm font-bold text-sky-900">2 Seconds</div>
+        <div class="text-[11px] text-sky-700 mt-0.5">Recommended (Default)</div>
+      </button>
+      <button onclick="setPollingRate(3000)" id="rate-3000" class="p-3 rounded-xl border border-slate-200 text-center hover:border-sky-500 transition">
+        <div class="text-sm font-bold text-slate-800">3 Seconds</div>
+        <div class="text-[11px] text-slate-500 mt-0.5">Standard</div>
+      </button>
+      <button onclick="setPollingRate(5000)" id="rate-5000" class="p-3 rounded-xl border border-slate-200 text-center hover:border-sky-500 transition">
+        <div class="text-sm font-bold text-slate-800">5 Seconds</div>
+        <div class="text-[11px] text-slate-500 mt-0.5">Low Bandwidth</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Hardware Simulation Controls (Clearly Labelled) -->
+  <div class="metric-card p-5 sm:p-6 border-l-4 border-l-amber-500">
+    <div class="flex items-center space-x-3 mb-2">
+      <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+        <i data-lucide="flask-conical" class="w-4 h-4"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-900">Lab Hardware Simulator</h3>
+        <span class="inline-flex items-center px-2 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800">For Testing &amp; Evaluation</span>
+      </div>
+    </div>
+    <p class="text-xs text-slate-600">
+      If the physical ESP32 is unplugged or you want to demo real-time UI reactions during an MCA viva evaluation, click the buttons below. These calls will insert genuine database records marked with <code class="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-800">is_simulated = true</code>.
+    </p>
+
+    <div class="mt-4 flex flex-wrap items-center gap-3">
+      <button onclick="triggerSimulation('WET')" class="px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs inline-flex items-center space-x-2 transition">
+        <i data-lucide="droplets" class="w-4 h-4"></i>
+        <span>Trigger Simulated Water Leakage (WET)</span>
+      </button>
+
+      <button onclick="triggerSimulation('DRY')" class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs inline-flex items-center space-x-2 transition">
+        <i data-lucide="check" class="w-4 h-4"></i>
+        <span>Trigger Simulated Dry Baseline (DRY)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Server Connection & API Endpoint Info -->
+  <div class="metric-card p-5 sm:p-6">
+    <h3 class="text-base font-bold text-slate-900">Backend API Endpoints</h3>
+    <p class="text-xs text-slate-500 mt-0.5">Use these URLs to test with cURL, Postman, or configure your physical ESP32 firmware.</p>
+
+    <div class="mt-4 space-y-2 text-xs font-mono">
+      <div class="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
+        <span class="text-slate-600 font-bold"><span class="text-emerald-600 font-bold">POST</span> /api/sensor-data</span>
+        <span class="text-slate-400">Receives ESP32 readings (JSON)</span>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
+        <span class="text-slate-600 font-bold"><span class="text-sky-600 font-bold">GET</span> /api/latest-reading</span>
+        <span class="text-slate-400">Latest sensor state &amp; device status</span>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
+        <span class="text-slate-600 font-bold"><span class="text-sky-600 font-bold">GET</span> /api/readings</span>
+        <span class="text-slate-400">Historical telemetry with range &amp; pagination</span>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
+        <span class="text-slate-600 font-bold"><span class="text-sky-600 font-bold">GET</span> /api/statistics</span>
+        <span class="text-slate-400">Aggregated wet/dry metrics &amp; incidents</span>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
+        <span class="text-slate-600 font-bold"><span class="text-sky-600 font-bold">GET</span> /api/alerts</span>
+        <span class="text-slate-400">Active and resolved incident logs</span>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
+        <span class="text-slate-600 font-bold"><span class="text-sky-600 font-bold">GET</span> /api/export-csv</span>
+        <span class="text-slate-400">CSV file generation &amp; download</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function setPollingRate(ms) {
+    localStorage.setItem('dashboard_poll_rate_ms', ms);
+    [1000, 2000, 3000, 5000].forEach(r => {
+      const el = document.getElementById(`rate-${r}`);
+      if (el) {
+        if (r === ms) {
+          el.className = "p-3 rounded-xl border-2 border-sky-600 bg-sky-50/50 text-center transition";
+        } else {
+          el.className = "p-3 rounded-xl border border-slate-200 text-center hover:border-sky-500 transition";
+        }
+      }
+    });
+    showToast(`Polling interval updated to ${ms/1000}s`);
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    const saved = parseInt(localStorage.getItem('dashboard_poll_rate_ms')) || 2000;
+    setPollingRate(saved);
+  });
+</script>
+{% endblock %}
+

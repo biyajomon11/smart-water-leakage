@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Leakage Alerts{% endblock %}
+{% block page_title %}Water Leakage Incident Alerts{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Active Incident Notice Box (Shown when active incident exists) -->
+  <div id="active-incident-box" class="hidden alert-banner-wet rounded-2xl p-6 transition-all">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 rounded-xl bg-red-600 text-white flex items-center justify-center shrink-0 animate-pulse">
+          <i data-lucide="siren" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-red-600 text-white uppercase tracking-wider mb-1">
+            CRITICAL ACTIVE INCIDENT
+          </div>
+          <h2 class="text-xl font-black text-slate-900">Emergency: Water Leakage In Progress</h2>
+          <p id="active-incident-desc" class="text-xs text-slate-700 mt-0.5">
+            Moisture detected on ESP32 water sensor (GPIO 34). Actuator alarm (Buzzer &amp; Red LED) is active.
+          </p>
+        </div>
+      </div>
+      <div class="flex flex-col sm:items-end shrink-0">
+        <span class="text-xs text-slate-500 font-medium">Incident Active Since</span>
+        <span id="active-incident-time" class="text-sm font-mono font-bold text-red-700">--:--:--</span>
+        <button onclick="triggerSimulation('DRY')" class="mt-2 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition">
+          Simulate Clear Water
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Statistics Header -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="metric-card p-5">
+      <span class="text-xs font-semibold text-slate-500 uppercase">Total Incidents</span>
+      <div id="alerts-total-count" class="text-2xl font-black text-slate-900 mt-2">0</div>
+      <p class="text-xs text-slate-500 mt-1">Recorded since deployment</p>
+    </div>
+    <div class="metric-card p-5">
+      <span class="text-xs font-semibold text-slate-500 uppercase">Active Incidents</span>
+      <div id="alerts-active-count" class="text-2xl font-black text-red-600 mt-2">0</div>
+      <p class="text-xs text-slate-500 mt-1">Currently alarming</p>
+    </div>
+    <div class="metric-card p-5">
+      <span class="text-xs font-semibold text-slate-500 uppercase">Avg Resolution Time</span>
+      <div id="alerts-avg-duration" class="text-2xl font-black text-slate-900 mt-2">0s</div>
+      <p class="text-xs text-slate-500 mt-1">Average time until dried</p>
+    </div>
+  </div>
+
+  <!-- Incident History Table -->
+  <div class="metric-card p-5 sm:p-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      <div>
+        <h3 class="text-base font-bold text-slate-900">Leakage Event Log</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Chronological record of water detection alarms</p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <select id="alerts-status-filter" onchange="fetchAlertsTable()" class="text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <option value="all">All Incidents</option>
+          <option value="ACTIVE">Active Incidents Only</option>
+          <option value="RESOLVED">Resolved Incidents Only</option>
+        </select>
+        <a href="/api/export-csv?type=events" class="inline-flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 shadow-xs transition">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          <span>Export CSV</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto mt-4">
+      <table class="w-full text-left text-xs text-slate-600">
+        <thead class="bg-slate-50 text-slate-500 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-200">
+          <tr>
+            <th class="py-3 px-3">Event ID</th>
+            <th class="py-3 px-3">Device ID</th>
+            <th class="py-3 px-3">Event Status</th>
+            <th class="py-3 px-3">Detected At</th>
+            <th class="py-3 px-3">Resolved At</th>
+            <th class="py-3 px-3">Duration</th>
+            <th class="py-3 px-3">Description</th>
+          </tr>
+        </thead>
+        <tbody id="alerts-table-body" class="divide-y divide-slate-100">
+          <tr>
+            <td colspan="7" class="py-8 text-center text-slate-400">Loading incident data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function fetchAlertsTable() {
+    const status = document.getElementById('alerts-status-filter').value;
+    const tbody = document.getElementById('alerts-table-body');
+    const activeBox = document.getElementById('active-incident-box');
+    const activeTime = document.getElementById('active-incident-time');
+
+    try {
+      // 1. Fetch statistics
+      const statsRes = await fetch('/api/statistics');
+      const statsData = await statsRes.json();
+      if (statsData.statistics) {
+        document.getElementById('alerts-total-count').innerText = statsData.statistics.total_leakage_events;
+        document.getElementById('alerts-active-count').innerText = statsData.statistics.active_leakage_events;
+        document.getElementById('alerts-avg-duration').innerText = `${statsData.statistics.average_resolution_seconds}s`;
+      }
+
+      // 2. Fetch alerts
+      const res = await fetch(`/api/alerts?status=${status}`);
+      const data = await res.json();
+
+      let activeEvent = (data.alerts || []).find(a => a.status === 'ACTIVE');
+      if (activeEvent) {
+        activeBox.classList.remove('hidden');
+        activeTime.innerText = new Date(activeEvent.detected_at).toLocaleTimeString();
+      } else {
+        activeBox.classList.add('hidden');
+      }
+
+      if (!data.alerts || data.alerts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">No leakage alerts recorded yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.alerts.map(a => `
+        <tr class="hover:bg-slate-50/70 transition">
+          <td class="py-3 px-3 font-mono font-bold text-slate-700">#${a.id}</td>
+          <td class="py-3 px-3 font-mono text-slate-800">${a.device_id}</td>
+          <td class="py-3 px-3">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${a.status === 'ACTIVE' ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-emerald-100 text-emerald-800'}">
+              ${a.status}
+            </span>
+          </td>
+          <td class="py-3 px-3 font-mono text-slate-700">${new Date(a.detected_at).toLocaleString()}</td>
+          <td class="py-3 px-3 font-mono text-slate-500">${a.resolved_at ? new Date(a.resolved_at).toLocaleString() : '<span class="text-red-500 font-bold">In Progress</span>'}</td>
+          <td class="py-3 px-3 font-mono font-semibold">${a.duration_seconds ? a.duration_seconds + ' sec' : (a.status === 'ACTIVE' ? '<span class="text-red-600 animate-pulse">Ongoing</span>' : 'N/A')}</td>
+          <td class="py-3 px-3 text-slate-600 max-w-xs truncate" title="${a.description || ''}">${a.description || 'Water leakage event'}</td>
+        </tr>
+      `).join('');
+
+      if (window.lucide) lucide.createIcons();
+    } catch(err) {
+      console.error(err);
+      tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-red-500">Failed to load alerts: ${err.message}</td></tr>`;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    fetchAlertsTable();
+    setInterval(fetchAlertsTable, 3000);
+  });
+</script>
+{% endblock %}
+

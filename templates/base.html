@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Smart Water Leakage Monitoring System{% endblock %} | MCA IoT Project</title>
+  
+  <!-- Inter Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              900: '#0f172a',
+              800: '#1e293b',
+              700: '#334155',
+              600: '#475569'
+            },
+            primary: {
+              DEFAULT: '#0284c7',
+              hover: '#0369a1'
+            },
+            safe: '#10b981',
+            alarm: '#ef4444',
+            warning: '#f59e0b'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+
+  <!-- Main App Layout: Sidebar + Content -->
+  <div class="flex flex-1 min-h-screen">
+    
+    <!-- Sidebar (Desktop & Mobile Drawer) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out flex flex-col">
+      
+      <!-- Brand Logo / Header -->
+      <div class="h-16 px-6 border-b border-slate-200 flex items-center justify-between bg-slate-900 text-white">
+        <a href="/" class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-lg bg-sky-500 flex items-center justify-center text-white shadow-md">
+            <i data-lucide="droplets" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-sm font-bold tracking-tight text-white leading-tight">AQUAWATCH</h1>
+            <p class="text-[10px] text-sky-300 font-medium uppercase tracking-wider">IoT Water Leakage</p>
+          </div>
+        </a>
+        <button id="close-sidebar-btn" class="lg:hidden text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Links -->
+      <div class="flex-1 px-4 py-5 space-y-1.5 overflow-y-auto">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 mb-2">Navigation</div>
+
+        <a href="/" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {% if active_page == 'dashboard' %}nav-link-active{% else %}nav-link-inactive{% endif %}">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="/live" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {% if active_page == 'live' %}nav-link-active{% else %}nav-link-inactive{% endif %}">
+          <i data-lucide="activity" class="w-4 h-4"></i>
+          <span>Live Monitoring</span>
+          <span class="ml-auto inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800">Realtime</span>
+        </a>
+
+        <a href="/history" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {% if active_page == 'history' %}nav-link-active{% else %}nav-link-inactive{% endif %}">
+          <i data-lucide="database" class="w-4 h-4"></i>
+          <span>Sensor History</span>
+        </a>
+
+        <a href="/alerts" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {% if active_page == 'alerts' %}nav-link-active{% else %}nav-link-inactive{% endif %}">
+          <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+          <span>Leakage Alerts</span>
+          <span id="sidebar-alert-badge" class="ml-auto hidden items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 animate-pulse">Alert</span>
+        </a>
+
+        <a href="/analytics" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {% if active_page == 'analytics' %}nav-link-active{% else %}nav-link-inactive{% endif %}">
+          <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+          <span>Analytics & Reports</span>
+        </a>
+
+        <div class="pt-4 mt-4 border-t border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 mb-2">Hardware & Settings</div>
+
+        <a href="/device" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {% if active_page == 'device' %}nav-link-active{% else %}nav-link-inactive{% endif %}">
+          <i data-lucide="cpu" class="w-4 h-4"></i>
+          <span>Device Information</span>
+        </a>
+
+        <a href="/settings" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {% if active_page == 'settings' %}nav-link-active{% else %}nav-link-inactive{% endif %}">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+          <span>Settings</span>
+        </a>
+
+        <a href="/about" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors {% if active_page == 'about' %}nav-link-active{% else %}nav-link-inactive{% endif %}">
+          <i data-lucide="info" class="w-4 h-4"></i>
+          <span>About Project</span>
+        </a>
+      </div>
+
+      <!-- Sidebar Footer: Device Status Widget -->
+      <div class="p-4 border-t border-slate-200 bg-slate-50/70">
+        <div class="flex items-center justify-between text-xs mb-2">
+          <span class="text-slate-500 font-medium">ESP32 Hardware</span>
+          <span id="sidebar-hw-status" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-200 text-slate-700">
+            <span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5"></span>
+            Checking...
+          </span>
+        </div>
+        <div class="text-[11px] text-slate-500 flex items-center justify-between">
+          <span>Target IP:</span>
+          <span id="sidebar-ip" class="font-mono text-slate-700">---</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Overlay backdrop for mobile sidebar -->
+    <div id="sidebar-backdrop" class="fixed inset-0 z-30 bg-slate-900/40 opacity-0 pointer-events-none transition-opacity duration-200 lg:hidden"></div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col lg:pl-64">
+      
+      <!-- Top Navigation Header -->
+      <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-6">
+        
+        <!-- Left: Mobile Toggle & Page Title -->
+        <div class="flex items-center space-x-3">
+          <button id="mobile-toggle-btn" class="lg:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+              {% block page_title %}Smart Water Leakage Monitoring System{% endblock %}
+            </h2>
+            <p class="text-xs text-slate-500 hidden sm:block">ESP32 Real-Time IoT Telemetry & Automatic Alarm</p>
+          </div>
+        </div>
+
+        <!-- Right: Telemetry Indicators & Quick Actions -->
+        <div class="flex items-center space-x-3 sm:space-x-4">
+          
+          <!-- Live Clock -->
+          <div class="hidden md:flex flex-col text-right">
+            <span id="live-time" class="text-xs font-mono font-bold text-slate-800">--:--:--</span>
+            <span id="live-date" class="text-[11px] text-slate-500">-- --- ----</span>
+          </div>
+
+          <div class="h-6 w-px bg-slate-200 hidden md:block"></div>
+
+          <!-- ESP32 Connection Pill -->
+          <div id="top-device-pill" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+            <span id="top-device-dot" class="w-2 h-2 rounded-full bg-slate-400 mr-2"></span>
+            <span id="top-device-text">Hardware: Checking</span>
+          </div>
+
+          <!-- Quick Lab Simulation Dropdown / Toggle (Clearly Labelled) -->
+          <div class="flex items-center space-x-1.5 bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs">
+            <span class="text-[11px] font-semibold text-slate-500 px-1 hidden lg:inline">Lab Simulation:</span>
+            <button id="sim-wet-btn" onclick="triggerSimulation('WET')" title="Simulate Water Leakage" class="px-2 py-1 rounded bg-white hover:bg-red-50 text-red-600 hover:text-red-700 font-semibold border border-slate-200 shadow-xs transition">
+              Sim Wet
+            </button>
+            <button id="sim-dry-btn" onclick="triggerSimulation('DRY')" title="Simulate Dry Condition" class="px-2 py-1 rounded bg-white hover:bg-emerald-50 text-emerald-600 hover:text-emerald-700 font-semibold border border-slate-200 shadow-xs transition">
+              Sim Dry
+            </button>
+          </div>
+
+        </div>
+      </header>
+
+      <!-- Main Body Container -->
+      <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        {% block content %}{% endblock %}
+      </main>
+
+      <!-- Footer -->
+      <footer class="border-t border-slate-200 bg-white py-4 px-6 text-center text-xs text-slate-500">
+        <p>Smart Water Leakage Detection and Real-Time Monitoring System &bull; MCA Final Year IoT Project &bull; ESP32 &amp; PostgreSQL</p>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- Core JavaScript Scripts -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script>
+    // Initialize Lucide icons
+    document.addEventListener("DOMContentLoaded", function() {
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+      // Mobile sidebar logic
+      const mobileBtn = document.getElementById('mobile-toggle-btn');
+      const closeBtn = document.getElementById('close-sidebar-btn');
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+
+      function toggleSidebar() {
+        sidebar.classList.toggle('-translate-x-full');
+        backdrop.classList.toggle('opacity-0');
+        backdrop.classList.toggle('pointer-events-none');
+      }
+
+      if (mobileBtn) mobileBtn.addEventListener('click', toggleSidebar);
+      if (closeBtn) closeBtn.addEventListener('click', toggleSidebar);
+      if (backdrop) backdrop.addEventListener('click', toggleSidebar);
+
+      // Live Clock
+      function updateClock() {
+        const now = new Date();
+        const timeEl = document.getElementById('live-time');
+        const dateEl = document.getElementById('live-date');
+        if (timeEl) timeEl.innerText = now.toLocaleTimeString();
+        if (dateEl) dateEl.innerText = now.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+    });
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

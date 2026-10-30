@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Device Information{% endblock %}
+{% block page_title %}ESP32 Hardware &amp; Pinout Specifications{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Device Status Banner -->
+  <div class="metric-card p-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 rounded-xl bg-slate-900 text-sky-400 flex items-center justify-center shrink-0">
+          <i data-lucide="cpu" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span id="dev-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">
+              Checking...
+            </span>
+            <span class="text-xs text-slate-400 font-mono">ESP32-WROOM-32D</span>
+          </div>
+          <h2 class="text-xl font-bold text-slate-900 mt-1">ESP32 Water Leakage Monitor #1</h2>
+          <p class="text-xs text-slate-500">Autonomous edge detector node with local hardware alarm fallback</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <button onclick="fetchDeviceInfo()" class="px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 shadow-xs inline-flex items-center space-x-2 transition">
+          <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+          <span>Check Heartbeat</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hardware Telemetry & Connection Specs Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    
+    <div class="metric-card p-4">
+      <span class="text-xs font-semibold text-slate-500 uppercase">Device ID</span>
+      <div id="dev-id-val" class="text-lg font-bold font-mono text-slate-900 mt-1">ESP32_LEAK_01</div>
+      <p class="text-[11px] text-slate-400 mt-1">Hardware identifier</p>
+    </div>
+
+    <div class="metric-card p-4">
+      <span class="text-xs font-semibold text-slate-500 uppercase">Local IP Address</span>
+      <div id="dev-ip-val" class="text-lg font-bold font-mono text-slate-900 mt-1">192.168.1.100</div>
+      <p class="text-[11px] text-slate-400 mt-1">Assigned by Wi-Fi router</p>
+    </div>
+
+    <div class="metric-card p-4">
+      <span class="text-xs font-semibold text-slate-500 uppercase">Wi-Fi Network (SSID)</span>
+      <div id="dev-ssid-val" class="text-lg font-bold text-slate-900 mt-1">V2030</div>
+      <p id="dev-rssi-val" class="text-[11px] text-slate-500 mt-1 font-mono">RSSI: -- dBm</p>
+    </div>
+
+    <div class="metric-card p-4">
+      <span class="text-xs font-semibold text-slate-500 uppercase">Last Heartbeat</span>
+      <div id="dev-last-seen-val" class="text-lg font-bold font-mono text-slate-900 mt-1">--</div>
+      <p id="dev-seconds-ago" class="text-[11px] text-slate-400 mt-1">-- sec ago</p>
+    </div>
+
+  </div>
+
+  <!-- Pinout Architecture Table & Technical Specs -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Active Hardware Pin Connections (7 cols) -->
+    <div class="lg:col-span-7 metric-card p-5 sm:p-6">
+      <h3 class="text-base font-bold text-slate-900 mb-1">Active Hardware Pin Connections</h3>
+      <p class="text-xs text-slate-500 mb-4">ESP32 physical wiring configuration matching <code>code.ino</code></p>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-600">
+          <thead class="bg-slate-50 text-slate-500 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-200">
+            <tr>
+              <th class="py-2.5 px-3">Peripheral</th>
+              <th class="py-2.5 px-3">ESP32 Pin</th>
+              <th class="py-2.5 px-3">Direction</th>
+              <th class="py-2.5 px-3">Active Logic</th>
+              <th class="py-2.5 px-3">Function Description</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 font-normal">
+            <tr>
+              <td class="py-3 px-3 font-semibold text-slate-900 flex items-center space-x-1.5">
+                <i data-lucide="droplet" class="w-3.5 h-3.5 text-sky-500"></i>
+                <span>Water Sensor (S)</span>
+              </td>
+              <td class="py-3 px-3 font-mono font-bold text-slate-800">GPIO 34</td>
+              <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800">INPUT</span></td>
+              <td class="py-3 px-3 font-mono">HIGH (1) = Wet</td>
+              <td class="py-3 px-3 text-slate-500">Analog/Digital surface moisture detection probe</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-3 font-semibold text-slate-900 flex items-center space-x-1.5">
+                <i data-lucide="volume-2" class="w-3.5 h-3.5 text-red-500"></i>
+                <span>Active Buzzer (I/O)</span>
+              </td>
+              <td class="py-3 px-3 font-mono font-bold text-slate-800">GPIO 25</td>
+              <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">OUTPUT</span></td>
+              <td class="py-3 px-3 font-mono">HIGH = Sound ON</td>
+              <td class="py-3 px-3 text-slate-500">High-decibel acoustic alarm sounded when wet</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-3 font-semibold text-slate-900 flex items-center space-x-1.5">
+                <i data-lucide="circle" class="w-3.5 h-3.5 text-emerald-500"></i>
+                <span>Green LED</span>
+              </td>
+              <td class="py-3 px-3 font-mono font-bold text-slate-800">GPIO 26</td>
+              <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">OUTPUT</span></td>
+              <td class="py-3 px-3 font-mono">HIGH = ON</td>
+              <td class="py-3 px-3 text-slate-500">Status light indicating dry safe baseline</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-3 font-semibold text-slate-900 flex items-center space-x-1.5">
+                <i data-lucide="circle-dot" class="w-3.5 h-3.5 text-red-500"></i>
+                <span>Red LED</span>
+              </td>
+              <td class="py-3 px-3 font-mono font-bold text-slate-800">GPIO 27</td>
+              <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">OUTPUT</span></td>
+              <td class="py-3 px-3 font-mono">HIGH = ON</td>
+              <td class="py-3 px-3 text-slate-500">Emergency warning light illuminated upon leakage</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-3 font-semibold text-slate-900">Power Supply (+ / -)</td>
+              <td class="py-3 px-3 font-mono text-slate-800">3V3 &amp; GND</td>
+              <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800">POWER</span></td>
+              <td class="py-3 px-3 font-mono">3.3V DC</td>
+              <td class="py-3 px-3 text-slate-500">Common regulated rail from ESP32 regulator</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Microcontroller Specifications (5 cols) -->
+    <div class="lg:col-span-5 metric-card p-5 sm:p-6 space-y-4">
+      <h3 class="text-base font-bold text-slate-900">Controller Architecture</h3>
+      <p class="text-xs text-slate-500">Node specifications and network protocol stack</p>
+
+      <div class="space-y-3 text-xs">
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+          <span class="text-slate-500">Processor Core</span>
+          <span class="font-semibold text-slate-800">Dual-Core Xtensa LX6 @ 240MHz</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+          <span class="text-slate-500">Wireless Protocol</span>
+          <span class="font-semibold text-slate-800">Wi-Fi 802.11 b/g/n (2.4GHz)</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+          <span class="text-slate-500">Data Protocol</span>
+          <span class="font-semibold text-slate-800">HTTP/1.1 REST JSON POST</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+          <span class="text-slate-500">Local Alarm Autonomy</span>
+          <span class="font-semibold text-emerald-600">100% Offline Capable</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+          <span class="text-slate-500">Transmission Mode</span>
+          <span class="font-semibold text-slate-800">State-Change + 5s Heartbeat</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function fetchDeviceInfo() {
+    try {
+      const res = await fetch('/api/device-status');
+      const data = await res.json();
+      const dev = data.device;
+      if (!dev) return;
+
+      const badge = document.getElementById('dev-status-badge');
+      if (dev.is_online) {
+        badge.innerText = 'ONLINE';
+        badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800';
+      } else {
+        badge.innerText = 'OFFLINE';
+        badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-600';
+      }
+
+      document.getElementById('dev-id-val').innerText = dev.id || 'ESP32_LEAK_01';
+      document.getElementById('dev-ip-val').innerText = dev.ip_address || '192.168.1.100';
+      document.getElementById('dev-ssid-val').innerText = dev.wifi_ssid || 'V2030';
+      document.getElementById('dev-rssi-val').innerText = `RSSI: ${dev.wifi_rssi ? dev.wifi_rssi + ' dBm (' + dev.wifi_signal_quality + ')' : 'N/A'}`;
+      document.getElementById('dev-last-seen-val').innerText = dev.last_seen ? new Date(dev.last_seen).toLocaleTimeString() : 'Never';
+      document.getElementById('dev-seconds-ago').innerText = `${dev.seconds_since_last_seen !== null ? dev.seconds_since_last_seen + 's ago' : 'No heartbeat'}`;
+
+    } catch(err) {
+      console.error(err);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    fetchDeviceInfo();
+    setInterval(fetchDeviceInfo, 3000);
+  });
+</script>
+{% endblock %}
+

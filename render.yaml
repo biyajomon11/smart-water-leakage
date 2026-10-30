@@ -1,0 +1,31 @@
+# Render Blueprint Specification
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # Web Application Service (Flask + Gunicorn + Dashboard)
+  - type: web
+    name: water-leakage-monitor
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 app:app
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: water-leakage-db
+          property: connectionString
+      - key: DEVICE_OFFLINE_THRESHOLD_SECONDS
+        value: "15"
+
+databases:
+  # Managed PostgreSQL Database Service
+  - name: water-leakage-db
+    databaseName: water_leakage_db
+    user: postgres
+    plan: free
+

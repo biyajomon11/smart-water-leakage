@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Sensor History{% endblock %}
+{% block page_title %}Sensor Readings History &amp; Data Logs{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Control Header & Filters -->
+  <div class="metric-card p-5">
+    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      
+      <!-- Left Filters -->
+      <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+        <!-- Search -->
+        <div class="relative w-full sm:w-56">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+          <input 
+            type="text" 
+            id="history-search-input" 
+            oninput="handleHistoryFilterChange()" 
+            placeholder="Search device or sensor..." 
+            class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+          >
+        </div>
+
+        <!-- Status Filter -->
+        <select id="history-status-filter" onchange="handleHistoryFilterChange()" class="text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <option value="all">All Statuses (Wet &amp; Dry)</option>
+          <option value="WET">Water Detected (WET only)</option>
+          <option value="DRY">Dry Condition (DRY only)</option>
+        </select>
+
+        <!-- Time Range Filter -->
+        <select id="history-range-filter" onchange="handleHistoryFilterChange()" class="text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <option value="24h">Last 24 Hours</option>
+          <option value="1h">Last 1 Hour</option>
+          <option value="7d">Last 7 Days</option>
+          <option value="all">All Time</option>
+        </select>
+      </div>
+
+      <!-- Right Export & Refresh -->
+      <div class="flex items-center space-x-2 w-full lg:w-auto justify-end">
+        <button onclick="fetchHistoryTable()" class="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-slate-900 shadow-xs transition" title="Refresh Table">
+          <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+        </button>
+        <a href="/api/export-csv?type=readings" class="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 shadow-xs transition">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>Export All CSV</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Historical Data Table -->
+  <div class="metric-card p-5 sm:p-6">
+    <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+      <div>
+        <h3 class="text-base font-bold text-slate-900">Recorded Telemetry Logs</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Immutable time-series records stored in PostgreSQL</p>
+      </div>
+      <span id="history-total-count" class="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
+        Loading...
+      </span>
+    </div>
+
+    <div class="overflow-x-auto mt-4">
+      <table class="w-full text-left text-xs text-slate-600">
+        <thead class="bg-slate-50 text-slate-500 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-200">
+          <tr>
+            <th class="py-3 px-3">ID</th>
+            <th class="py-3 px-3">Device ID</th>
+            <th class="py-3 px-3">Sensor Name</th>
+            <th class="py-3 px-3">Logic Value</th>
+            <th class="py-3 px-3">Water Status</th>
+            <th class="py-3 px-3">Wi-Fi RSSI</th>
+            <th class="py-3 px-3">Recorded At (UTC)</th>
+            <th class="py-3 px-3">Source</th>
+          </tr>
+        </thead>
+        <tbody id="history-table-body" class="divide-y divide-slate-100 font-normal">
+          <tr>
+            <td colspan="8" class="py-10 text-center text-slate-400">Loading historical data from PostgreSQL...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <div id="pagination-info">
+        Page 1 of 1
+      </div>
+      <div class="flex items-center space-x-2">
+        <button id="prev-page-btn" onclick="changeHistoryPage(-1)" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition">
+          Previous
+        </button>
+        <button id="next-page-btn" onclick="changeHistoryPage(1)" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition">
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let currentPage = 1;
+  const pageLimit = 25;
+  let totalPages = 1;
+
+  async function fetchHistoryTable() {
+    const range = document.getElementById('history-range-filter').value;
+    const status = document.getElementById('history-status-filter').value;
+    const tbody = document.getElementById('history-table-body');
+    const totalCountEl = document.getElementById('history-total-count');
+    const pageInfo = document.getElementById('pagination-info');
+    const prevBtn = document.getElementById('prev-page-btn');
+    const nextBtn = document.getElementById('next-page-btn');
+
+    try {
+      const url = `/api/readings?range=${range}&status=${status}&limit=${pageLimit}&page=${currentPage}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      totalPages = data.pages || 1;
+      totalCountEl.innerText = `${data.total} Total Records`;
+      pageInfo.innerText = `Showing page ${data.page} of ${totalPages} (${data.total} readings)`;
+
+      prevBtn.disabled = currentPage <= 1;
+      nextBtn.disabled = currentPage >= totalPages;
+
+      if (!data.readings || data.readings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">No records found matching filters.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.readings.map(r => `
+        <tr class="hover:bg-slate-50/70 transition">
+          <td class="py-3 px-3 font-mono font-bold text-slate-500">#${r.id}</td>
+          <td class="py-3 px-3 font-mono text-slate-800">${r.device_id}</td>
+          <td class="py-3 px-3">${r.sensor_name}</td>
+          <td class="py-3 px-3 font-mono font-bold">${r.sensor_value}</td>
+          <td class="py-3 px-3">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${r.water_status === 'WET' ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}">
+              ${r.water_status}
+            </span>
+          </td>
+          <td class="py-3 px-3 font-mono text-slate-500">${r.wifi_rssi ? r.wifi_rssi + ' dBm' : 'N/A'}</td>
+          <td class="py-3 px-3 font-mono text-slate-600">${new Date(r.recorded_at).toLocaleString()}</td>
+          <td class="py-3 px-3">
+            ${r.is_simulated ? '<span class="text-amber-600 font-medium">Simulation</span>' : '<span class="text-sky-600 font-medium">ESP32 Hardware</span>'}
+          </td>
+        </tr>
+      `).join('');
+
+      if (window.lucide) lucide.createIcons();
+    } catch(err) {
+      console.error(err);
+      tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-red-500">Failed to load sensor history: ${err.message}</td></tr>`;
+    }
+  }
+
+  function handleHistoryFilterChange() {
+    currentPage = 1;
+    fetchHistoryTable();
+  }
+
+  function changeHistoryPage(delta) {
+    const target = currentPage + delta;
+    if (target >= 1 && target <= totalPages) {
+      currentPage = target;
+      fetchHistoryTable();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    fetchHistoryTable();
+  });
+</script>
+{% endblock %}
+
