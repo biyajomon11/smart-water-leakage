@@ -24,13 +24,12 @@
 // -----------------------------------------------------------------------------------
 // 1. Wi-Fi & Backend Server Configuration
 // -----------------------------------------------------------------------------------
-// Set your Wi-Fi credentials here
+// IMPORTANT: ESP32 only supports 2.4 GHz Wi-Fi!
+// If using a mobile hotspot (e.g. Vivo V2030), ensure the AP Band is set to "2.4 GHz"
 const char* ssid     = "V2030";
 const char* password = "12345678";
 
-// Backend Server API URL:
-// Option A (Render Cloud URL): "https://water-leakage-monitor.onrender.com/api/sensor-data"
-// Option B (Local Computer IP): "http://192.168.1.100:5000/api/sensor-data"
+// Live Render Cloud URL
 const char* serverUrl = "https://water-leakage-monitor.onrender.com/api/sensor-data";
 
 // Unique Device Identifier
@@ -61,7 +60,19 @@ int lastSensorReading = -1;
 unsigned long lastHeartbeatTime = 0;
 const unsigned long HEARTBEAT_INTERVAL_MS = 5000; // Heartbeat telemetry every 5s
 unsigned long lastWifiRetryTime = 0;
-const unsigned long WIFI_RETRY_INTERVAL_MS = 10000; // Auto-reconnect retry every 10s
+const unsigned long WIFI_RETRY_INTERVAL_MS = 15000; // Reconnect retry interval
+
+// Helper: print human-readable Wi-Fi status
+void printWiFiStatus(wl_status_t status) {
+  switch (status) {
+    case WL_IDLE_STATUS:     Serial.println("WL_IDLE_STATUS"); break;
+    case WL_NO_SSID_AVAIL:   Serial.println("WL_NO_SSID_AVAIL (Hotspot not found! Check 2.4 GHz)"); break;
+    case WL_CONNECTED:       Serial.println("WL_CONNECTED (Success!)"); break;
+    case WL_CONNECT_FAILED:  Serial.println("WL_CONNECT_FAILED (Wrong password?)"); break;
+    case WL_DISCONNECTED:    Serial.println("WL_DISCONNECTED"); break;
+    default:                 Serial.printf("Status code: %d\n", status); break;
+  }
+}
 
 // Forward declaration
 void sendSensorDataToBackend(int sensorVal, const char* waterStatus);
@@ -83,21 +94,27 @@ void setup() {
 
   Serial.println("\n========================================================");
   Serial.println(" SMART WATER LEAKAGE DETECTION AND MONITORING (ESP32)  ");
-  Serial.println(" Cloud-Ready: Supports HTTP (Local) & HTTPS (Render)   ");
+  Serial.println(" Cloud-Connected: https://water-leakage-monitor.onrender.com ");
   Serial.println("========================================================");
   Serial.print("Device ID:  ");
   Serial.println(DEVICE_ID);
   Serial.print("Target URL: ");
   Serial.println(serverUrl);
 
-  // Initialize Wi-Fi connection
+  // Initialize Wi-Fi connection cleanly
   WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false); // Disable modem sleep for stable link
+  WiFi.disconnect(true); // Clear previous connection state
+  delay(200);
+
+  Serial.print("Connecting to Wi-Fi SSID: [");
+  Serial.print(ssid);
+  Serial.println("] ...");
+
   WiFi.begin(ssid, password);
-  Serial.print("Connecting to Wi-Fi: ");
-  Serial.println(ssid);
 
   int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+  while (WiFi.status() != WL_CONNECTED && attempts < 30) {
     delay(500);
     Serial.print(".");
     attempts++;
@@ -106,14 +123,15 @@ void setup() {
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("[Wi-Fi] Connected successfully!");
-    Serial.print("[Wi-Fi] ESP32 IP Address: ");
+    Serial.print("[Wi-Fi] IP Address: ");
     Serial.println(WiFi.localIP());
-    Serial.print("[Wi-Fi] Signal Strength (RSSI): ");
+    Serial.print("[Wi-Fi] Signal (RSSI): ");
     Serial.print(WiFi.RSSI());
     Serial.println(" dBm");
   } else {
-    Serial.println("[Wi-Fi] Connection failed or timed out.");
-    Serial.println("[Wi-Fi] System will run in Offline Hardware Protection Mode.");
+    Serial.print("[Wi-Fi] Initial connection failed. Reason: ");
+    printWiFiStatus(WiFi.status());
+    Serial.println("[Wi-Fi] Local alarm protection is active offline.");
   }
 }
 
@@ -163,7 +181,7 @@ void loop() {
       }
     }
 
-    // Transmit telemetry to backend server (Render or Local)
+    // Transmit telemetry to Render Cloud Backend
     sendSensorDataToBackend(currentReading, statusStr);
 
     lastSensorReading = currentReading;
@@ -171,11 +189,13 @@ void loop() {
   }
 
   // ---------------------------------------------------------------------------------
-  // 3. Wi-Fi Auto-Reconnect Failsafe
+  // 3. Wi-Fi Auto-Reconnect Failsafe (Clean disconnect + begin)
   // ---------------------------------------------------------------------------------
   if (WiFi.status() != WL_CONNECTED && (millis() - lastWifiRetryTime >= WIFI_RETRY_INTERVAL_MS)) {
-    Serial.println("[Wi-Fi] Attempting auto-reconnect...");
-    WiFi.reconnect();
+    Serial.println("[Wi-Fi] Disconnected. Re-initiating connection...");
+    WiFi.disconnect();
+    delay(100);
+    WiFi.begin(ssid, password);
     lastWifiRetryTime = millis();
   }
 
@@ -183,7 +203,7 @@ void loop() {
 }
 
 // -----------------------------------------------------------------------------------
-// 4. Send HTTP / HTTPS POST JSON Request to Backend
+// 4. Send HTTPS POST JSON Request to Render Backend
 // -----------------------------------------------------------------------------------
 void sendSensorDataToBackend(int sensorVal, const char* waterStatus) {
   if (WiFi.status() != WL_CONNECTED) {
@@ -197,7 +217,7 @@ void sendSensorDataToBackend(int sensorVal, const char* waterStatus) {
   // Initialize client based on protocol
   if (isHttps) {
     WiFiClientSecure secureClient;
-    secureClient.setInsecure(); // Allows connecting to Render HTTPS without hardcoding CA certs
+    secureClient.setInsecure(); // Allows connecting to Render HTTPS without CA certs
     if (!http.begin(secureClient, serverUrl)) {
       Serial.println("[HTTPS] Unable to connect to host.");
       return;
@@ -211,7 +231,7 @@ void sendSensorDataToBackend(int sensorVal, const char* waterStatus) {
   }
 
   http.addHeader("Content-Type", "application/json");
-  http.setTimeout(4000); // 4-second timeout for cloud latency
+  http.setTimeout(5000); // 5-second timeout for cloud latency
 
   // Construct JSON payload
   String jsonPayload = "{";
